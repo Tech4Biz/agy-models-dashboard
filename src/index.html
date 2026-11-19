@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AGY Models: Live Cost &amp; Performance</title>
+  <style>
+    :root {
+      --bg: #F8FAFC;
+      --card: #FFFFFF;
+      --card-alt: #F1F5F9;
+      --border: #E2E8F0;
+      --fg: #0F172A;
+      --muted: #64748B;
+      --primary: #182B49;
+      --primary-fg: #FFFFFF;
+      --perf: #2563EB;
+      --cost: #FF6B00;
+      --good: #16A34A;
+      --warn: #D97706;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #0B1120;
+        --card: #111827;
+        --card-alt: #1E293B;
+        --border: #334155;
+        --fg: #F1F5F9;
+        --muted: #94A3B8;
+        --primary: #3B82F6;
+        --primary-fg: #FFFFFF;
+        --perf: #3B82F6;
+        --cost: #FB923C;
+        --good: #22C55E;
+        --warn: #FBBF24;
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #0B1120;
+      --card: #111827;
+      --card-alt: #1E293B;
+      --border: #334155;
+      --fg: #F1F5F9;
+      --muted: #94A3B8;
+      --primary: #3B82F6;
+      --primary-fg: #FFFFFF;
+      --perf: #3B82F6;
+      --cost: #FB923C;
+      --good: #22C55E;
+      --warn: #FBBF24;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--fg);
+      padding: 24px 16px;
+      display: flex;
+      justify-content: center;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 980px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px 24px;
+      box-shadow: 0 8px 28px rgba(15, 23, 42, 0.08);
+    }
+
+    .header {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.3px;
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      font-size: 12px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--warn);
+    }
+
+    .dot.live {
+      background: var(--good);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .seg {
+      display: inline-flex;
+      flex-wrap: wrap;
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 3px;
+      gap: 2px;
+    }
+
+    button {
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 5px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    button:hover {
+      color: var(--fg);
+    }
+
+    button.active {
+      background: var(--primary);
+      color: var(--primary-fg);
+    }
+
+    button.action-btn {
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+      color: var(--fg);
+      padding: 6px 12px;
+      border-radius: 8px;
+    }
+
+    button.action-btn:hover {
+      border-color: var(--primary);
+    }
+
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .legend-items {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .swatch {
+      width: 12px;
+      height: 8px;
+      border-radius: 2px;
+      display: inline-block;
+    }
+
+    .list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      content-visibility: auto;
+      contain-intrinsic-size: auto 700px;
+    }
+
+    @supports not (content-visibility: auto) {
+      .list {
+        contain: layout style paint;
+      }
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1.55fr 1.45fr 1fr;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--card);
+    }
+
+    .row:hover {
+      border-color: var(--primary);
+    }
+
+    .model-name {
+      font-size: 14px;
+      font-weight: 700;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .rank {
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 12px;
+      color: var(--muted);
+      min-width: 24px;
+    }
+
+    .provider-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+
+    .live-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(22, 163, 74, 0.14);
+      color: var(--good);
+    }
+
+    .snapshot-tag {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(217, 119, 6, 0.14);
+      color: var(--warn);
+    }
+
+    .model-use {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+      padding-left: 30px;
+    }
+
+    .bar-track {
+      position: relative;
+      width: 100%;
+      height: 18px;
+      border-radius: 5px;
+      background: var(--card-alt);
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .bar-perf {
+      position: absolute;
+      inset: 0 auto 0 0;
+      background: var(--perf);
+      opacity: 0.85;
+    }
+
+    .bar-cost {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      height: 7px;
+      background: var(--cost);
+      border-radius: 0 3px 3px 0;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+    }
+
+    .bar-meta {
+      display: flex;
+      justify-content: space-between;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .price-col {
+      text-align: right;
+      font-family: ui-monospace, SFMono-Regular, monospace;
+    }
+
+    .price-main {
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .price-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .scatter-box {
+      position: relative;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--card-alt);
+      padding: 12px;
+    }
+
+    canvas {
+      width: 100%;
+      height: 380px;
+      display: block;
+    }
+
+    .tooltip {
+      position: absolute;
+      pointer-events: none;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 10px;
+      font-size: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 10;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .footer {
+      margin-top: 14px;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    @media (max-width: 720px) {
+      .row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .price-col {
+        text-align: left;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header class="header">
+      <div>
+        <h1 class="title"> Frontier Models: Cost &amp; Performance Overlaid</h1>
+        <p class="subtitle">Google, Anthropic, OpenAI, Microsoft &amp; xAI pricing — refreshed from OpenRouter &amp;
+          weekly snapshots</p>
+        <div class="status-row">
+          <span class="status-pill">
+            <span id="status-dot" class="dot"></span>
+            <span id="status-text">Checking OpenRouter live pricing...</span>
+          </span>
+          <span id="weekly-pill" class="status-pill">Weekly view: Checking...</span>
+          <span id="updated-at" style="color: var(--muted);"></span>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="seg" role="group" aria-label="View mode">
+          <button type="button" id="view-bars" class="active" aria-pressed="true">Overlaid Bars</button>
+          <button type="button" id="view-scatter" aria-pressed="false">Scatter Plot</button>
+        </div>
+        <div id="sort-controls" class="seg" role="group" aria-label="Sort order">
+          <button type="button" id="btn-cap" class="active" aria-pressed="true">Best</button>
+          <button type="button" id="btn-val" aria-pressed="false">Best Value</button>
+          <button type="button" id="btn-cheap" aria-pressed="false">Lowest $</button>
+        </div>
+        <button type="button" id="btn-refresh" class="action-btn">Refresh</button>
+        <button type="button" id="btn-theme" class="action-btn">Theme</button>
+      </div>
+    </header>
+
+    <main>
+      <div class="filter-bar">
+        <div id="provider-controls" class="seg" role="group" aria-label="Filter by provider">
+          <button type="button" data-provider="All" class="active" aria-pressed="true">All</button>
+          <button type="button" data-provider="Google" aria-pressed="false">Google</button>
+          <button type="button" data-provider="Anthropic" aria-pressed="false">Anthropic</button>
+          <button type="button" data-provider="OpenAI" aria-pressed="false">OpenAI</button>
+          <button type="button" data-provider="Microsoft" aria-pressed="false">Microsoft</button>
+          <button type="button" data-provider="xAI" aria-pressed="false">xAI</button>
+        </div>
+        <span id="model-count" style="font-size: 12px; color: var(--muted);"></span>
+      </div>
+
+      <!-- Overlaid Bars View -->
+      <section id="bars-wrap" aria-label="Overlaid Bars Chart">
+        <div class="legend">
+          <div class="legend-items">
+            <span class="legend-item">
+              <span class="swatch" style="background: var(--perf);"></span>
+              <span>Performance (0 to 100)</span>
+            </span>
+            <span class="legend-item">
+              <span class="swatch" style="background: var(--cost);"></span>
+              <span>Cost Overlay (Output $ / 1M, scaled to max)</span>
+            </span>
+          </div>
+          <span>Longer blue vs. shorter orange = better value</span>
+        </div>
+        <div id="chart-list" class="list"></div>
+      </section>
+
+      <!-- Scatter View -->
+      <section id="scatter-wrap" class="hidden" aria-label="Scatter Plot">
+        <div class="scatter-box">
+          <canvas id="scatter-canvas"></canvas>
+          <div id="tooltip" class="tooltip hidden"></div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Sources: OpenRouter Public API (<code>openrouter.ai/api/v1/models</code>) &amp; Azure AI Foundry snapshot
+        (2026-11-19)</span>
+      <span>Orchestrator entries inherit their Neon / Argon base rates</span>
+    </footer>
+  </div>
+
+  <script>
+    const WEEKLY_CACHE_KEY = 'agy_models_weekly_pricing_v1';
+    const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+    const baseModels = [
+      {
+        rank: 1,
+        provider: "Anthropic",
+        name: "Claude Fable 5.2",
+        use: "Frontier deep research, architecture & hardest reasoning",
+        cap: 100,
+        input: 8.00,
+        output: 40.00,
+        matchers: ["anthropic/claude-fable-5.2"]
+      },
+      {
+        rank: 2,
+        provider: "OpenAI",
+        name: "GPT-6.2 Astra",
+        use: "Flagship OpenAI reasoning & complex multi-step engineering",
+        cap: 99,
+        input: 8.00,
+        output: 40.00,
+        matchers: ["openai/gpt-6.2-astra"]
+      },
+      {
+        rank: 3,
+        provider: "Anthropic",
+        name: "Claude Opus 5.5",
+        use: "Hardest coding, deep research & nuanced synthesis",
+        cap: 98,
+        input: 4.00,
+        output: 20.00,
+        matchers: ["anthropic/claude-opus-5.5"]
+      },
+      {
+        rank: 4,
+        provider: "Google",
+        name: "Gemini 4 Argon",
+        use: "Deep frontier reasoning, engineering & multi-step logic",
+        cap: 97,
+        input: 2.00,
+        output: 10.00,
+        matchers: ["google/gemini-4-argon"]
+      },
+      {
+        rank: 5,
+        provider: "Google",
+        name: "Orchestrator (Argon)",
+        use: "Complex multi-agent orchestration & planning",
+        cap: 94,
+        input: 2.00,
+        output: 10.00,
+        matchers: ["google/gemini-4-argon"]
+      },
+      {
+        rank: 6,
+        provider: "xAI",
+        name: "Grok 4.7",
+        use: "Flagship xAI reasoning, coding & real-time synthesis",
+        cap: 92,
+        input: 2.00,
+        output: 6.00,
+        matchers: ["x-ai/grok-4.7"]
+      },
+      {
+        rank: 7,
+        provider: "OpenAI",
+        name: "GPT-6.2 Sol",
+        use: "Balanced frontier coding, analysis & daily engineering",
+        cap: 90,
+        input: 2.00,
+        output: 10.00,
+        matchers: ["openai/gpt-6.2-sol"]
+      },
+      {
+        rank: 8,
+        provider: "Google",
+        name: "Gemini 4 Neon",
+        use: "Complex coding, architecture & balanced speed",
+        cap: 86,
+        input: 3.00,
+        output: 15.00,
+        matchers: ["google/gemini-4-neon"]
+      },
+      {
+        rank: 9,
+        provider: "Google",
+        name: "Orchestrator (Neon)",
+        use: "Multi-agent coordination with balanced speed",
+        cap: 83,
+        input: 3.00,
+        output: 15.00,
+        matchers: ["google/gemini-4-neon"]
+      },
+      {
+        rank: 10,
+        provider: "Anthropic",
+        name: "Claude Sonnet 5.5",
+        use: "Daily software engineering, analysis & code review",
+        cap: 81,
+        input: 2.00,
+        output: 10.00,
+        matchers: ["anthropic/claude-sonnet-5.5"]
+      },
+      {
+        rank: 11,
+        provider: "OpenAI",
+        name: "GPT-6.1 Terra",
+        use: "Mid-tier efficient coding, synthesis & structured output",
+        cap: 77,
+        input: 1.00,
+        output: 5.00,
+        matchers: ["openai/gpt-6.1-terra"]
+      },
+      {
+        rank: 12,
+        provider: "xAI",
+        name: "Grok 4.3",
+        use: "General-purpose mid-tier reasoning (1M context)",
+        cap: 75,
+        input: 1.25,
+        output: 2.50,
+        matchers: ["x-ai/grok-4.3"]
+      },
+      {
+        rank: 13,
+        provider: "Google",
+        name: "Gemini 4 Hydrogen",
+        use: "Fast daily coding, drafting & routine agentic tasks",
+        cap: 72,
+        input: 1.50,
+        output: 7.50,
+        matchers: ["google/gemini-4-hydrogen"]
+      },
+      {
+        rank: 14,
+        provider: "Microsoft",
+        name: "MAI-DS-R1 (Azure)",
+        use: "Microsoft enterprise reasoning model (Azure AI Foundry)",
+        cap: 70,
+        input: 1.35,
+        output: 5.40,
+        matchers: []
+      },
+      {
+        rank: 15,
+        provider: "xAI",
+        name: "Grok Build 0.1",
+        use: "Fast lightweight coding & agentic build tasks",
+        cap: 65,
+        input: 1.00,
+        output: 2.00,
+        matchers: ["x-ai/grok-build-0.1"]
+      },
+      {
+        rank: 16,
+        provider: "Google",
+        name: "Gemini 3.8 Flash",
+        use: "High-volume, trivial tasks & fast summaries",
+        cap: 58,
+        input: 0.825,
+        output: 4.125,
+        matchers: ["google/gemini-3.8-flash"]
+      },
+      {
+        rank: 17,
+        provider: "Anthropic",
+        name: "Claude Haiku 5.5",
+        use: "Ultra-fast classification, routing & high-volume tasks",
+        cap: 56,
+        input: 0.10,
+        output: 0.50,
+        matchers: ["anthropic/claude-haiku-5.5"]
+      },
+      {
+        rank: 18,
+        provider: "OpenAI",
+        name: "GPT-6 Luna",
+        use: "High-volume budget reasoning & lightweight tasks",
+        cap: 55,
+        input: 0.10,
+        output: 0.50,
+        matchers: ["openai/gpt-6-luna"]
+      },
+      {
+        rank: 19,
+        provider: "Microsoft",
+        name: "Phi-4",
+        use: "Compact, high-efficiency reasoning & edge/API workloads",
+        cap: 52,
+        input: 0.07,
+        output: 0.14,
+        matchers: ["microsoft/phi-4"]
+      },
+      {
+        rank: 20,
+        provider: "OpenAI",
+        name: "GPT-OSS 120B",
+        use: "Low-cost open-weight general reasoning",
+        cap: 50,
+        input: 0.15,
+        output: 0.60,
+        matchers: ["openai/gpt-oss-120b"]
+      },
+      {
+        rank: 21,
+        provider: "Microsoft",
+        name: "Phi-4 Mini (Azure)",
+        use: "Ultra-low-cost small language model (Azure AI Foundry)",
+        cap: 46,
+        input: 0.075,
+        output: 0.30,
+        matchers: []
+      }
+    ];
+
+    let models = baseModels.map(m => ({ ...m, isLive: false }));
+    let currentView = 'bars';
+    let currentSort = 'cap';
+    let currentProvider = 'All';
+    let points = [];
+
+    function fmtPrice(val) {
+      if (val < 0.1) return '$' + val.toFixed(3).replace(/0$/, '');
+      if (val < 1) return '$' + val.toFixed(2);
+      return '$' + (Number.isInteger(val) ? val.toFixed(0) : val.toFixed(2));
+    }
+
+    function updateWeeklyPill(timestamp) {
+      const pill = document.getElementById('weekly-pill');
+      if (!timestamp) {
+        pill.textContent = 'Weekly view: Snapshot (2026-11-19)';
+        return;
+      }
+      const dateStr = new Date(timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+      const nextDate = new Date(timestamp + ONE_WEEK_MS).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      pill.textContent = `Refreshed ${dateStr} · Next weekly: ${nextDate}`;
+    }
+
+    function loadCachedModels() {
+      try {
+        const raw = localStorage.getItem(WEEKLY_CACHE_KEY);
+        if (!raw) return null;
+        return JSON.parse(raw);
+      } catch {
+        return null;
+      }
+    }
+
+    function saveCachedModels(updatedModels) {
+      try {
+        localStorage.setItem(WEEKLY_CACHE_KEY, JSON.stringify({
+          timestamp: Date.now(),
+          models: updatedModels
+        }));
+      } catch {
+        // Ignore storage quota / privacy mode errors
+      }
+    }
+
+    async function fetchLivePricing(force = false) {
+      const dot = document.getElementById('status-dot');
+      const txt = document.getElementById('status-text');
+      const upd = document.getElementById('updated-at');
+
+      const cached = loadCachedModels();
+      if (!force && cached && (Date.now() - cached.timestamp) < ONE_WEEK_MS && Array.isArray(cached.models)) {
+        models = cached.models;
+        const liveCount = models.filter(m => m.isLive).length;
+        dot.className = liveCount > 0 ? "dot live" : "dot";
+        txt.textContent = `Weekly Cache Active (${liveCount}/${models.length} live)`;
+        upd.textContent = "Cached " + new Date(cached.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        updateWeeklyPill(cached.timestamp);
+        render();
+        if (currentView === 'scatter') drawScatter();
+        return;
+      }
+
+      txt.textContent = "Fetching live OpenRouter pricing...";
+      dot.className = "dot";
+
+      try {
+        const res = await fetch("https://openrouter.ai/api/v1/models");
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        const json = await res.json();
+        const catalog = json.data || [];
+
+        let matchedCount = 0;
+        models = baseModels.map(m => {
+          if (!m.matchers || m.matchers.length === 0) {
+            return { ...m, isLive: false };
+          }
+          const hit = catalog.find(item => {
+            const id = (item.id || "").toLowerCase();
+            if (id.includes(":batch") || id.includes(":free")) return false;
+            return m.matchers.some(pattern => id === pattern || id.startsWith(pattern + "-202"));
+          });
+          if (hit && hit.pricing && hit.pricing.prompt && hit.pricing.completion) {
+            const inPerM = parseFloat(hit.pricing.prompt) * 1e6;
+            const outPerM = parseFloat(hit.pricing.completion) * 1e6;
+            if (!isNaN(inPerM) && !isNaN(outPerM) && outPerM > 0) {
+              matchedCount++;
+              return { ...m, input: inPerM, output: outPerM, isLive: true, liveId: hit.id };
+            }
+          }
+          return { ...m, isLive: false };
+        });
+
+        const now = Date.now();
+        saveCachedModels(models);
+        dot.className = matchedCount > 0 ? "dot live" : "dot";
+        txt.textContent = matchedCount > 0
+          ? `Live OpenRouter Pricing (${matchedCount}/${models.length} matched)`
+          : "Fallback Snapshot (No live matches found)";
+        upd.textContent = "Updated " + new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        updateWeeklyPill(now);
+      } catch (err) {
+        if (cached && Array.isArray(cached.models)) {
+          models = cached.models;
+          updateWeeklyPill(cached.timestamp);
+          txt.textContent = "Offline / Using Weekly Cache";
+        } else {
+          models = baseModels.map(m => ({ ...m, isLive: false }));
+          updateWeeklyPill(null);
+          txt.textContent = "Offline / Fallback Snapshot";
+        }
+        dot.className = "dot";
+        upd.textContent = "Could not reach OpenRouter";
+      }
+
+      render();
+      if (currentView === 'scatter') drawScatter();
+    }
+
+    function getFilteredModels() {
+      if (currentProvider === 'All') return models;
+      return models.filter(m => m.provider === currentProvider);
+    }
+
+    function setView(v) {
+      currentView = v;
+      document.getElementById('bars-wrap').classList.toggle('hidden', v !== 'bars');
+      document.getElementById('scatter-wrap').classList.toggle('hidden', v !== 'scatter');
+      document.getElementById('sort-controls').classList.toggle('hidden', v !== 'bars');
+      const vb = document.getElementById('view-bars');
+      const vs = document.getElementById('view-scatter');
+      vb.classList.toggle('active', v === 'bars');
+      vs.classList.toggle('active', v === 'scatter');
+      vb.setAttribute('aria-pressed', String(v === 'bars'));
+      vs.setAttribute('aria-pressed', String(v === 'scatter'));
+      if (v === 'scatter') drawScatter();
+    }
+
+    function setSort(mode) {
+      currentSort = mode;
+      const buttons = { cap: 'btn-cap', val: 'btn-val', cheap: 'btn-cheap' };
+      Object.entries(buttons).forEach(([k, id]) => {
+        const el = document.getElementById(id);
+        const active = k === mode;
+        el.classList.toggle('active', active);
+        el.setAttribute('aria-pressed', String(active));
+      });
+      render();
+    }
+
+    function setProvider(provider) {
+      currentProvider = provider;
+      document.querySelectorAll('#provider-controls button').forEach(btn => {
+        const active = btn.dataset.provider === provider;
+        btn.classList.toggle('active', active);
+        btn.setAttribute('aria-pressed', String(active));
+      });
+      render();
+      if (currentView === 'scatter') drawScatter();
+    }
+
+    function toggleTheme() {
+      const root = document.documentElement;
+      const cur = root.getAttribute('data-theme');
+      const next = cur === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', next);
+      if (currentView === 'scatter') drawScatter();
+    }
+
+    function render() {
+      const filtered = getFilteredModels();
+      document.getElementById('model-count').textContent = `Showing ${filtered.length} of ${models.length} models`;
+
+      const maxOut = Math.max(...filtered.map(m => m.output), 10);
+      const sorted = [...filtered].sort((a, b) => {
+        if (currentSort === 'cap') return a.rank - b.rank;
+        if (currentSort === 'val') return (b.cap / b.output) - (a.cap / a.output);
+        return a.output - b.output || b.cap - a.cap;
+      });
+
+      document.getElementById('chart-list').innerHTML = sorted.map((m, idx) => {
+        const costPct = Math.min(100, (m.output / maxOut) * 100);
+        const statusBadge = m.isLive
+          ? '<span class="live-tag">LIVE</span>'
+          : '<span class="snapshot-tag">SNAPSHOT</span>';
+        return `
+          <div class="row">
+            <div>
+              <div class="model-name">
+                <span class="rank">#${idx + 1}</span>
+                <span>${m.name}</span>
+                <span class="provider-tag">${m.provider}</span>
+                ${statusBadge}
+              </div>
+              <div class="model-use">${m.use}</div>
+            </div>
+            <div>
+              <div class="bar-track">
+                <div class="bar-perf" style="width: ${m.cap}%;"></div>
+                <div class="bar-cost" style="width: ${costPct}%;"></div>
+              </div>
+              <div class="bar-meta">
+                <span>Perf: ${m.cap}/100</span>
+                <span>Cost: ${Math.round(costPct)}% of max</span>
+              </div>
+            </div>
+            <div class="price-col">
+              <div class="price-main">${fmtPrice(m.input)} / ${fmtPrice(m.output)}</div>
+              <div class="price-sub">In / Out per 1M</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function drawScatter() {
+      const canvas = document.getElementById('scatter-canvas');
+      if (!canvas) return;
+      const filtered = getFilteredModels();
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+
+      const cs = getComputedStyle(document.documentElement);
+      const fg = cs.getPropertyValue('--fg').trim();
+      const muted = cs.getPropertyValue('--muted').trim();
+      const border = cs.getPropertyValue('--border').trim();
+      const perfC = cs.getPropertyValue('--perf').trim();
+      const costC = cs.getPropertyValue('--cost').trim();
+
+      const w = rect.width;
+      const h = rect.height;
+      const pad = { l: 44, r: 28, t: 20, b: 36 };
+      const pw = w - pad.l - pad.r;
+      const ph = h - pad.t - pad.b;
+      const rawMax = Math.max(...filtered.map(m => m.output), 10);
+      const maxX = Math.max(12, Math.ceil((rawMax * 1.1) / 5) * 5);
+
+      ctx.clearRect(0, 0, w, h);
+      ctx.strokeStyle = border;
+      ctx.lineWidth = 1;
+      ctx.font = '11px ui-monospace, SFMono-Regular, monospace';
+      ctx.fillStyle = muted;
+
+      [45, 60, 75, 90, 100].forEach(v => {
+        const y = pad.t + ph - ((v - 40) / 65) * ph;
+        ctx.beginPath();
+        ctx.moveTo(pad.l, y);
+        ctx.lineTo(w - pad.r, y);
+        ctx.stroke();
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(v, pad.l - 6, y);
+      });
+
+      const step = maxX <= 20 ? 5 : 10;
+      for (let v = 0; v <= maxX; v += step) {
+        const x = pad.l + (v / maxX) * pw;
+        ctx.beginPath();
+        ctx.moveTo(x, pad.t);
+        ctx.lineTo(x, pad.t + ph);
+        ctx.stroke();
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText('$' + v, x, pad.t + ph + 6);
+      }
+
+      ctx.fillStyle = fg;
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Output Cost ($ per 1M tokens)', pad.l + pw / 2, h - 12);
+
+      ctx.save();
+      ctx.translate(12, pad.t + ph / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.fillText('Performance', 0, 0);
+      ctx.restore();
+
+      points = filtered.map(m => ({
+        ...m,
+        x: pad.l + (m.output / maxX) * pw,
+        y: pad.t + ph - ((m.cap - 40) / 65) * ph,
+        r: 6.5
+      }));
+
+      points.forEach(p => {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.cap >= 90 ? perfC : costC;
+        ctx.fill();
+        ctx.strokeStyle = fg;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = fg;
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = p.output > maxX * 0.7 ? 'right' : 'left';
+        ctx.textBaseline = 'middle';
+        const dx = p.output > maxX * 0.7 ? -10 : 10;
+        ctx.fillText(p.name, p.x + dx, p.y);
+      });
+    }
+
+    document.getElementById('view-bars').addEventListener('click', () => setView('bars'));
+    document.getElementById('view-scatter').addEventListener('click', () => setView('scatter'));
+    document.getElementById('btn-cap').addEventListener('click', () => setSort('cap'));
+    document.getElementById('btn-val').addEventListener('click', () => setSort('val'));
+    document.getElementById('btn-cheap').addEventListener('click', () => setSort('cheap'));
+    document.getElementById('btn-refresh').addEventListener('click', () => fetchLivePricing(true));
+    document.getElementById('btn-theme').addEventListener('click', toggleTheme);
+    document.querySelectorAll('#provider-controls button').forEach(btn => {
+      btn.addEventListener('click', () => setProvider(btn.dataset.provider));
+    });
+
+    const canvas = document.getElementById('scatter-canvas');
+    const tooltip = document.getElementById('tooltip');
+    canvas.addEventListener('mousemove', e => {
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const hit = points.find(p => Math.hypot(p.x - mx, p.y - my) < 12);
+      if (hit) {
+        tooltip.innerHTML = `<strong>${hit.name}</strong> (${hit.provider})<br>Perf: ${hit.cap}/100 | ${fmtPrice(hit.input)} / ${fmtPrice(hit.output)}<br><span style="color:var(--muted)">${hit.use}</span>`;
+        tooltip.style.left = Math.min(rect.width - 210, Math.max(8, hit.x + 12)) + 'px';
+        tooltip.style.top = Math.max(8, hit.y - 40) + 'px';
+        tooltip.classList.remove('hidden');
+      } else {
+        tooltip.classList.add('hidden');
+      }
+    });
+    canvas.addEventListener('mouseleave', () => tooltip.classList.add('hidden'));
+    window.addEventListener('resize', () => { if (currentView === 'scatter') drawScatter(); });
+
+    render();
+    fetchLivePricing(false);
+  </script>
+</body>
+
+</html>

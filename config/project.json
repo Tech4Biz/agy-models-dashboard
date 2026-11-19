@@ -1,0 +1,9 @@
+{
+  "name": "agy-models-dashboard",
+  "displayName": "AGY Models Dashboard",
+  "description": "Project workspace for AGY Models Dashboard",
+  "version": "1.0.0",
+  "author": "Gregory A. Johnson",
+  "type": "general",
+  "status": "active"
+}
